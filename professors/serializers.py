@@ -4,8 +4,6 @@ from rest_framework.serializers import (
     CharField,
     DateTimeField,
     EmailField,
-    Field,
-    IntegerField,
     ModelSerializer,
     PrimaryKeyRelatedField,
     SerializerMethodField,
@@ -14,35 +12,26 @@ from rest_framework.serializers import (
 from courses.models import Course
 from courses.serializers import CourseSerializer
 
-from .models import Student
+from .models import Professor
 
 
-class StudentSerializer(ModelSerializer):
+class ProfessorSerializer(ModelSerializer):
     full_name = SerializerMethodField()
     email = EmailField(source="user.email")
     course = CourseSerializer()
-    complementary_hours = IntegerField(read_only=True)
     created_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     updated_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
-        model = Student
-        fields = [
-            "id",
-            "full_name",
-            "email",
-            "course",
-            "complementary_hours",
-            "created_at",
-            "updated_at",
-        ]
+        model = Professor
+        fields = ["id", "full_name", "email", "course", "created_at", "updated_at"]
 
     def get_full_name(self, obj):
 
         return obj.full_name
 
 
-class StudentCreateSerializer(ModelSerializer):
+class ProfessorCreateSerializer(ModelSerializer):
 
     username = CharField(write_only=True)
     password = CharField(write_only=True)
@@ -53,7 +42,7 @@ class StudentCreateSerializer(ModelSerializer):
     course = PrimaryKeyRelatedField(queryset=Course.objects.all(), write_only=True)
 
     class Meta:
-        model = Student
+        model = Professor
         fields = [
             "username",
             "password",
@@ -79,9 +68,9 @@ class StudentCreateSerializer(ModelSerializer):
             user.set_password(user_data["password"])
             user.save()
 
-            student = Student.objects.create(
+            professor = Professor.objects.create(
                 user=user,
                 course=validated_data["course"],
             )
 
-        return student
+        return professor

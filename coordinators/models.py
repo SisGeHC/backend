@@ -1,21 +1,10 @@
 from django.contrib.auth.models import User
-from django.db.models import (
-    CASCADE,
-    DateTimeField,
-    ForeignKey,
-    Model,
-    OneToOneField,
-    PositiveIntegerField,
-)
+from django.db.models import CASCADE, DateTimeField, Model, OneToOneField
 from django.utils import timezone
 
-from courses.models import Course
 
-
-class Student(Model):
+class Coordinator(Model):
     user = OneToOneField(User, on_delete=CASCADE)
-    course = ForeignKey(Course, on_delete=CASCADE, related_name="students")
-    complementary_hours = PositiveIntegerField(default=0)
     created_at = DateTimeField(default=timezone.now)
     updated_at = DateTimeField(auto_now=True, null=True)
 
