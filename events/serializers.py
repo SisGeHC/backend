@@ -1,7 +1,10 @@
 from rest_framework import serializers
-from .models import Event
+from events.models import Event
+from users.serializers import UserSerializer
 
 class EventSerializer(serializers.ModelSerializer):
+    created_by = UserSerializer(read_only=True)
+
     class Meta:
         model = Event
-        fields = '__all__'
+        fields = ["id", "title", "description", "category", "created_at", "start_time", "end_time", "is_closed", "created_by"]

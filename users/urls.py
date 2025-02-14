@@ -1,18 +1,30 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import LogoutView
-from .views import RegisterUserView, UpdateUserView, DeleteUserView
+from .views import LoginView
+from .views import RegisterUserView, UpdateUserView, DeleteUserView, RegisterTeacherView, RegisterCoordinatorView
+from .views import StudentDashboardView, TeacherDashboardView, CoordinatorDashboardView, CurrentUserView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 
 router = DefaultRouter()
 
 
 urlpatterns = [
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/register/', RegisterUserView.as_view(), name='user_register'),
+    path('', include(router.urls)),
+    #auth
+    path('auth/login/', LoginView.as_view(), name='token_obtain_pair'),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),  # Renova o token de acesso
+    path("auth/logout/", TokenBlacklistView.as_view(), name="token_blacklist"),  # Invalida o refresh token
+
+    #crud Users
+    path('auth/register-coordinator/', RegisterCoordinatorView.as_view(), name='register_coordinator'),
+    path('auth/register-teacher/', RegisterTeacherView.as_view(), name='register_teacher'),
+    path("auth/register/", RegisterUserView.as_view(), name="user_register"),
     path('users/<int:pk>/update/', UpdateUserView.as_view(), name='user_update'),
     path('users/<int:pk>/delete/', DeleteUserView.as_view(), name='user_delete'),
-    path('auth/logout/', LogoutView.as_view(), name='token_logout'),
-    path('', include(router.urls)),
+    path('me/', CurrentUserView.as_view(), name='user-detail'),
+
+    #Controle de acesso de cada grupo
+    path("students/dashboard/", StudentDashboardView.as_view(), name="student_dashboard"),
+    path("teachers/dashboard/", TeacherDashboardView.as_view(), name="teacher_dashboard"),
+    path("coordinators/dashboard/", CoordinatorDashboardView.as_view(), name="coordinator_dashboard"),
 ]

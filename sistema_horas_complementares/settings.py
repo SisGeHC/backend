@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +29,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
+
+AUTH_USER_MODEL = "users.User"
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -39,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'validacao',
     'drf_spectacular',
+    'corsheaders',
 
     # Django REST Framework
     'rest_framework',
@@ -49,7 +54,6 @@ INSTALLED_APPS = [
     'users',
     'courses',
     'events',
-    'enrollments',
     'certificates',
 ]
 
@@ -61,7 +65,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Adiciona middleware do CORS
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True  # Permite acesso de qualquer origem
 
 ROOT_URLCONF = 'sistema_horas_complementares.urls'
 
@@ -136,7 +143,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -144,6 +155,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from datetime import timedelta
+
+AUTHENTICATION_BACKENDS = [
+    'users.authentication.EmailBackend',  # Permite login com email
+    'django.contrib.auth.backends.ModelBackend',  # Permite login com username
+]
 
 REST_FRAMEWORK = {
     # Configura JWT como método de autenticação padrão
@@ -169,6 +185,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")  # Usa a chave do .env
 
 SIMPLE_JWT = {
+    'USER_ID_FIELD': 'id',
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
@@ -177,5 +194,9 @@ SIMPLE_JWT = {
     'SIGNING_KEY': os.getenv("SIGNING_KEY", "fallback-key"),  # Pega do .env
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+
+
 
 
