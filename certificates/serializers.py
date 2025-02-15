@@ -1,7 +1,10 @@
+import os
+
 from rest_framework.serializers import (
     DateTimeField,
     ModelSerializer,
     PrimaryKeyRelatedField,
+    ValidationError,
 )
 
 from students.models import Student
@@ -26,6 +29,16 @@ class CertificateSerializer(ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_file(self, value):
+        """Valida o tipo de arquivo."""
+        allowed_extensions = [".png", ".jpeg"]
+        ext = os.path.splitext(value.name)[1]  # Pega a extensão do arquivo
+        if ext.lower() not in allowed_extensions:
+            raise ValidationError(
+                f"Tipo de arquivo não suportado. Use: {', '.join(allowed_extensions)}"
+            )
+        return value
 
     def to_representation(self, instance):
 

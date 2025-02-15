@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import transaction
+from rest_framework import status
+from rest_framework.response import Response
 from rest_framework.serializers import (
     CharField,
     DateTimeField,
@@ -7,6 +9,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     PrimaryKeyRelatedField,
     SerializerMethodField,
+    ValidationError,
 )
 
 from courses.models import Course
@@ -63,6 +66,8 @@ class ProfessorCreateSerializer(ModelSerializer):
         }
 
         with transaction.atomic():
+            if User.objects.filter(email=user_data["email"]).exists():
+                raise ValidationError({"email": "Este email já está em uso."})
 
             user = User.objects.create_user(**user_data)
             user.set_password(user_data["password"])
