@@ -19,7 +19,7 @@ urlpatterns = [
     path('auth/register-coordinator/', RegisterCoordinatorView.as_view(), name='register_coordinator'),
     path('auth/register-teacher/', RegisterTeacherView.as_view(), name='register_teacher'),
     path("auth/register/", RegisterUserView.as_view(), name="user_register"),
-    path('users/<int:pk>/update/', UpdateUserView.as_view(), name='user_update'),
+    path('update/', UpdateUserView.as_view(), name='user_update'),
     path('users/<int:pk>/delete/', DeleteUserView.as_view(), name='user_delete'),
     path('me/', CurrentUserView.as_view(), name='user-detail'),
 

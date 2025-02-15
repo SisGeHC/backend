@@ -5,15 +5,13 @@ from rest_framework.decorators import action
 from courses.models import Course
 from courses.serializers import CourseSerializer
 from users.permissions import IsCoordinator
-
-@extend_schema_view(
-    list=extend_schema(summary="Listar todos os cursos", tags=["Cursos"]),
-    retrieve=extend_schema(summary="Detalhes de um curso", tags=["Cursos"]),
-    create=extend_schema(summary="Criar um curso", tags=["Cursos"]),
-    update=extend_schema(summary="Atualizar um curso", tags=["Cursos"]),
-    partial_update=extend_schema(summary="Atualização parcial de um curso", tags=["Cursos"]),
-    destroy=extend_schema(summary="Deletar um curso", tags=["Cursos"]),
-)
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from .models import Course
+from .serializers import CourseSerializer
+from users.permissions import IsCoordinator
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -23,7 +21,9 @@ class CourseViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             self.permission_classes = [AllowAny]  # Qualquer usuário pode listar ou visualizar cursos
         elif self.action in ["update", "partial_update"]:
-            self.permission_classes = [IsAuthenticated, IsCoordinator]  # Apenas Coordenador podem atualizar cursos
+            self.permission_classes = [IsAuthenticated, IsCoordinator]  # Apenas Coordenadores podem atualizar cursos
+        elif self.action in ["create"]:  
+            self.permission_classes = [IsAdminUser]  # Apenas Superusuários podem criar cursos
         return super().get_permissions()
     
     @extend_schema(
@@ -37,15 +37,18 @@ class CourseViewSet(viewsets.ModelViewSet):
         user = request.user
         course = self.get_object()
 
-        if student.role != "student":
+        # Verifica se o usuário é um estudante
+        if user.role != "student":
             return Response({"error": "Apenas alunos podem se inscrever em cursos."}, status=status.HTTP_403_FORBIDDEN)
 
-        if student.student_course:
-            return Response({"error": "Você já está inscrito em um curso. Saia primeiro para se inscrever em outro."}, status=status.HTTP_400_BAD_REQUEST)
+        # Verifica se o aluno já está inscrito
+        if course.students.filter(id=user.id).exists():
+            return Response({"error": "Você já está inscrito neste curso."}, status=status.HTTP_400_BAD_REQUEST)
 
-        course.students.add(student)
+        # Inscreve o aluno no curso
+        course.students.add(user)
+
         return Response({"message": "Inscrição realizada com sucesso!"}, status=status.HTTP_201_CREATED)
-
     @extend_schema(
         summary="Cancelar inscrição em um curso",
         description="Permite que alunos saiam de um curso pelo ID.",
@@ -54,15 +57,17 @@ class CourseViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def unenroll(self, request, pk=None):
-        user = request.user
+        user = request.user  # Corrigido
         course = self.get_object()
 
-        if student.role != "student":
+        if user.role != "student":  # Corrigido
             return Response({"error": "Apenas alunos podem sair de cursos."}, status=status.HTTP_403_FORBIDDEN)
 
-        if student not in course.students.all():
+        if user not in course.students.all():
             return Response({"error": "Você não está inscrito neste curso."}, status=status.HTTP_400_BAD_REQUEST)
 
-        course.students.remove(student)
+        course.students.remove(user)
         return Response({"message": "Você saiu do curso com sucesso!"}, status=status.HTTP_200_OK)
+
+
 

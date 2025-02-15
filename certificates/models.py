@@ -16,9 +16,9 @@ class Certificate(models.Model):
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="certificates")
-    file = models.FileField(upload_to="certificates/", validators=[validate_certificate_file])
+    file = models.FileField(upload_to="certificates/", default="certificates/default.pdf")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
-    hours = models.PositiveIntegerField()
+    hours = models.PositiveIntegerField(default=0)
     comment = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     validated_at = models.DateTimeField(blank=True, null=True)

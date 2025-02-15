@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
@@ -130,7 +131,7 @@ class LoginView(APIView):
         }, status=status.HTTP_200_OK)
 
 class UpdateUserView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         request=UserSerializer,
@@ -139,34 +140,23 @@ class UpdateUserView(APIView):
         summary="Atualizar usuário",
         tags=["Usuários"],
     )
-    def patch(self, request, id):
-        user_to_update = get_object_or_404(User, id=id)
-
-        # O usuário só pode editar a si mesmo, exceto se for coordenador
-        if request.user != user_to_update and request.user.role != "coordinator":
-            return Response({"error": "Você não tem permissão para editar este usuário."}, status=status.HTTP_403_FORBIDDEN)
-
+    def patch(self, request):
+        user_to_update = request.user  # Obtém o usuário autenticado
         data = request.data.copy()
 
-        if "role" in data and request.user.role != "coordinator":
+        if "role" in data:
             return Response({"error": "Você não pode alterar seu próprio papel (role)."}, status=status.HTTP_403_FORBIDDEN)
 
-        if user_to_update.role == "student" and request.user.role == "student":
+        if user_to_update.role == "student":
             allowed_fields = ["first_name", "last_name", "email", "username", "horasComplementares"]
             data = {key: value for key, value in data.items() if key in allowed_fields}
 
-        if request.user.role == "teacher" and "horasComplementares" in data:
-            return Response({"error": "Professores não podem modificar as horas complementares dos alunos."}, status=status.HTTP_403_FORBIDDEN)
-
-        if request.user.role == "coordinator":
-            serializer = UserSerializer(user_to_update, data=data, partial=True)
-        else:
-            serializer = UserSerializer(user_to_update, data=data, partial=True)
+        serializer = UserSerializer(user_to_update, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
+            return Response({"message": "Perfil atualizado com sucesso!", "user": serializer.data}, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CurrentUserView(APIView):
@@ -213,26 +203,23 @@ class RegisterUserView(APIView):
         tags=["Usuários"],
     )
     def post(self, request):
-        role = request.data.get("role")
+        request.data["role"] = "student"
 
-        if role not in ["student", "teacher", "coordinator"]:
-            return Response({"error": "Role inválido"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer_class = StudentSerializer if role == "student" else UserSerializer
-        serializer = serializer_class(data=request.data)
+        serializer = StudentSerializer(data=request.data)
 
         if serializer.is_valid():
             user = serializer.save()
-            user.set_password(request.data["password"])  # Criptografa a senha corretamente
+            user.set_password(request.data["password"]) 
             user.save()
-            return Response({"message": "Usuário cadastrado com sucesso", "user": serializer.data}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"message": "Usuário cadastrado com sucesso", "user": serializer.data}, 
+                status=status.HTTP_201_CREATED
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterTeacherView(APIView):
-    """
-    🔹 Apenas coordenadores podem criar professores.
-    """
+
     permission_classes = [permissions.IsAuthenticated, IsCoordinator]
 
     @extend_schema(
@@ -243,7 +230,6 @@ class RegisterTeacherView(APIView):
         tags=["Usuários"],
     )
     def post(self, request):
-        """Registra um professor usando TeacherSerializer."""
         serializer = TeacherSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()

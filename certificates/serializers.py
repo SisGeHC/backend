@@ -2,12 +2,6 @@ from rest_framework import serializers
 from .models import Certificate
 
 
-class CertificateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Certificate
-        fields = '__all__'
-
-
 class ValidateCertificateSerializer(serializers.Serializer):
     certificate_id = serializers.IntegerField()
     status = serializers.CharField()
@@ -19,9 +13,21 @@ class CertificateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Certificate
-        fields = "__all__"
+        fields = ['file', 'hours', 'comment']
         read_only_fields = ["status", "validated_at", "submitted_at"]
 
     def create(self, validated_data):
         validated_data["status"] = "pending"
         return super().create(validated_data)
+    
+    def get_openapi_schema(self):
+
+        return {
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "format": "binary"},
+                "hours": {"type": "integer"},
+                "comment": {"type": "string"},
+            },
+        }
+

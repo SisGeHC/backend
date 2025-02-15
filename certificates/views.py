@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import action
-from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
+from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view, OpenApiTypes
 from rest_framework import viewsets
 from .models import Certificate
 from .serializers import CertificateSerializer
@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from certificates.models import Certificate
 from certificates.serializers import CertificateSerializer
 from users.permissions import IsCoordinator
+from rest_framework.parsers import MultiPartParser, FormParser
 
 @extend_schema_view(
     list=extend_schema(
@@ -27,11 +28,10 @@ from users.permissions import IsCoordinator
         tags=["Certificados"]
     ),
     create=extend_schema(
-        summary="Criar um Certificado",
-        description="Permite que **apenas estudantes** criem certificados. O status sempre começa como `pending`.",
-        request=CertificateSerializer,
+        summary="Enviar certificado",
+        description="Aluno pode enviar um certificado como arquivo (PDF, JPG, PNG).",
+        request=CertificateSerializer, 
         responses={201: CertificateSerializer},
-        tags=["Certificados"]
     ),
     update=extend_schema(
         summary="Atualizar um Certificado",
@@ -50,7 +50,10 @@ class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)  
 
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
     def get_queryset(self):
         user = self.request.user
         if user.role == 'student':
@@ -101,7 +104,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
 
         return Response({"message": f"Certificado {status_choice} com sucesso!"}, status=status.HTTP_200_OK)
 
-
+    
 
 
 
