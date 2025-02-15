@@ -22,4 +22,5 @@ urlpatterns = [
     path("coordinators/", include("coordinators.urls")),
     path("certificates/", include("certificates.urls")),
     path("authentication/", include("authentication.urls")),
+    path("events/", include("events.urls")),
 ]
