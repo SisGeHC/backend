@@ -72,7 +72,7 @@ class CertificateCreateView(APIView):
         description="Upload a certificate file for the logged-in student.",
     )
     def post(self, request, *args, **kwargs):
-        # Obtém o estudante associado ao usuário logado
+
         try:
             student = Student.objects.get(user=request.user)
         except Student.DoesNotExist:
@@ -81,11 +81,9 @@ class CertificateCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Adiciona o student_id ao request.data
         data = request.data.copy()
         data["student"] = student.id
 
-        # Valida e salva o certificado
         serializer = CertificateSerializer(data=data)
         if serializer.is_valid():
             serializer.save()

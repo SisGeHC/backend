@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     "certificates",
     "authentication",
     "corsheaders",
+    "events",
+    "enrollments",
 ]
 
 
