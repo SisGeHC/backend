@@ -27,10 +27,12 @@ class StudentDetailView(RetrieveAPIView):
 
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+    lookup_field = "pk"
 
 
 class StudentUpdateView(UpdateAPIView):
 
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+    lookup_field = "pk"
     http_method_names = ["patch"]

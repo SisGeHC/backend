@@ -25,17 +25,23 @@ class CustomAuthToken(ObtainAuthToken):
         token, created = Token.objects.get_or_create(user=user)
 
         user_type = None
+        user_role_id = None
+
         if Student.objects.filter(user=user).exists():
             user_type = "student"
+            user_role_id = Student.objects.get(user=user).pk
         elif Coordinator.objects.filter(user=user).exists():
             user_type = "coordinator"
+            user_role_id = Coordinator.objects.get(user=user).pk
         elif Professor.objects.filter(user=user).exists():
             user_type = "professor"
+            user_role_id = Professor.objects.get(user=user).pk
 
         return Response(
             {
-                "token": token.key,
+                 "token": token.key,
                 "user_id": user.pk,
+                "role_id": user_role_id,
                 "email": user.email,
                 "username": user.username,
                 "user_type": user_type,

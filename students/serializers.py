@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from rest_framework import serializers
 from django.db import transaction
 from rest_framework.serializers import (
     CharField,
@@ -17,29 +18,36 @@ from courses.serializers import CourseSerializer
 from .models import Student
 
 
-class StudentSerializer(ModelSerializer):
-    full_name = SerializerMethodField()
-    email = EmailField(source="user.email")
-    course = CourseSerializer()
-    complementary_hours = IntegerField(read_only=True)
-    created_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
-    updated_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+class StudentSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    email = serializers.EmailField(source="user.email", read_only=True)
+    course_name = serializers.CharField(source="course.name", read_only=True)  
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), write_only=True)  
 
     class Meta:
         model = Student
-        fields = [
-            "id",
-            "full_name",
-            "email",
-            "course",
-            "complementary_hours",
-            "created_at",
-            "updated_at",
-        ]
+        fields = ["id", "full_name", "email", "course", "course_name"]
 
     def get_full_name(self, obj):
-
         return obj.full_name
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)  
+        course_data = validated_data.pop("course", None)  
+
+        if user_data and "email" in user_data:
+            instance.user.email = user_data["email"]
+            instance.user.save()
+
+        if course_data:
+            instance.course = course_data
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
 
 
 class StudentCreateSerializer(ModelSerializer):
