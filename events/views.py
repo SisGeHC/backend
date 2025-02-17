@@ -1,9 +1,17 @@
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from enrollments.models import Enrollment
+
 from .models import Date, Event
-from .serializers import CreateEventSerializer, DateSerializer, EventSerializer
+from .serializers import (
+    CreateEventSerializer,
+    DateSerializer,
+    EventEnrollmentSerializer,
+    EventSerializer,
+)
 
 
 class DateCreateView(APIView):
@@ -57,3 +65,22 @@ class EventDetailView(APIView):
             return Response(
                 {"error": "Evento não encontrado."}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class StudentEnrolledEventsView(ListAPIView):
+    serializer_class = EventEnrollmentSerializer
+
+    def get_queryset(self):
+        student_id = self.kwargs.get("student_id")
+
+        enrollments = Enrollment.objects.filter(student_id=student_id)
+        event_ids = enrollments.values_list("event_id", flat=True)
+        return Event.objects.filter(id__in=event_ids)
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
