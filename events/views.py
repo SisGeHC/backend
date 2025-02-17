@@ -1,10 +1,11 @@
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
-from drf_spectacular.utils import extend_schema
+
 from enrollments.models import Enrollment
-from django.shortcuts import get_object_or_404
 from professors.models import Professor
 
 from .models import Date, Event
@@ -15,19 +16,25 @@ from .serializers import (
     EventSerializer,
 )
 
+
 class EventUpdateView(APIView):
-    def put(self, request, id, *args, **kwargs):
+    def patch(self, request, id, *args, **kwargs):
         try:
             event = Event.objects.get(id=id)
         except Event.DoesNotExist:
-            return Response({"error": "Evento não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Evento não encontrado."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        serializer = EventSerializer(event, data=request.data, partial=True) 
+        serializer = EventSerializer(event, data=request.data, partial=True)
         if serializer.is_valid():
             updated_event = serializer.save()
-            return Response(EventSerializer(updated_event).data, status=status.HTTP_200_OK)
+            return Response(
+                EventSerializer(updated_event).data, status=status.HTTP_200_OK
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DateCreateView(APIView):
     serializer_class = DateSerializer
@@ -39,15 +46,18 @@ class DateCreateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class DateUpdateView(APIView):
     def put(self, request, id, *args, **kwargs):
         try:
             date = Date.objects.get(id=id)
         except Date.DoesNotExist:
-            return Response({"error": "Data não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Data não encontrada."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        serializer = DateSerializer(date, data=request.data, partial=True) 
+        serializer = DateSerializer(date, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -63,9 +73,7 @@ class DateListView(APIView):
 
 
 class EventListView(APIView):
-    @extend_schema(
-        responses={200: EventSerializer(many=True)}  
-    )
+    @extend_schema(responses={200: EventSerializer(many=True)})
     def get(self, request, *args, **kwargs):
         events = Event.objects.all()
         serializer = EventSerializer(events, many=True)
@@ -86,6 +94,7 @@ class EventCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EventDetailView(APIView):
     def get(self, request, pk, *args, **kwargs):
         try:
@@ -96,17 +105,25 @@ class EventDetailView(APIView):
             return Response(
                 {"error": "Evento não encontrado."}, status=status.HTTP_404_NOT_FOUND
             )
-        
+
+
 class EventDeleteView(APIView):
     def delete(self, request, id, *args, **kwargs):
         event = get_object_or_404(Event, id=id)
 
         if request.user != event.creator:
-            return Response({"error": "Você não tem permissão para deletar este evento."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "Você não tem permissão para deletar este evento."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         event.delete()
-        return Response({"message": "Evento deletado com sucesso!"}, status=status.HTTP_204_NO_CONTENT)
-        
+        return Response(
+            {"message": "Evento deletado com sucesso!"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
 class StudentEnrolledEventsView(ListAPIView):
     serializer_class = EventEnrollmentSerializer
 
@@ -124,7 +141,8 @@ class StudentEnrolledEventsView(ListAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
 class ProfessorCreatedEventsView(ListAPIView):
     serializer_class = EventSerializer
 
@@ -142,5 +160,3 @@ class ProfessorCreatedEventsView(ListAPIView):
             return Response(serializer.data, status=200)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
-        
-
