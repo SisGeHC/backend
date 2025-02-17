@@ -2,14 +2,15 @@ from io import BytesIO
 
 import qrcode
 from django.core.files import File
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.http import HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from .models import Enrollment
+from students.models import Student
 from .models import Enrollment, Event
 from .serializers import CreateEnrollmentSerializer, EnrollmentSerializer
 
@@ -25,9 +26,28 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
+        user_id = request.user.id  
+        try:
+            student = Student.objects.get(user_id=user_id)  
+            student_id = student.id 
+            print(f"✅ Student encontrado no banco: {student_id} (User: {user_id})")  
+        except Student.DoesNotExist:
+            print(f"❌ Erro: Nenhum estudante encontrado para User ID {user_id}")
+            return Response({"error": "Estudante não encontrado."}, status=status.HTTP_400_BAD_REQUEST) 
 
         event_id = request.data.get("event")
-        event = Event.objects.get(id=event_id)
+
+        try:
+            student = Student.objects.get(user_id=user_id)  
+            print(f"✅ Student encontrado no banco: {student.id} (User: {user_id})")  
+        except Student.DoesNotExist:
+            print(f"❌ Erro: Nenhum estudante encontrado para User ID {user_id}")
+            return Response({"error": "Estudante não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        event = Event.objects.select_for_update().get(id=event_id)
+
+        if Enrollment.objects.filter(student_id=student_id, event_id=event_id).exists():
+            return Response({"error": "Você já está inscrito neste evento!"}, status=status.HTTP_400_BAD_REQUEST)
 
         if event.slots <= 0:
             return Response(
@@ -38,10 +58,17 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data["student"] = request.user.id
 
-        serializer = self.get_serializer(data=data)
+        enrollment_data = {"student": student.id, "event": event_id}
+        print("📤 Dados enviados ao serializer:", enrollment_data)
+
+        serializer = self.get_serializer(data=enrollment_data)
+        if not serializer.is_valid():
+            print(f"❌ Erro de validação: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.is_valid(raise_exception=True)
         enrollment = serializer.save()
-
+        print(f"✅ Inscrição criada com sucesso: {enrollment}")
+        
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,

@@ -14,7 +14,7 @@ from .models import Coordinator
 
 class CoordinatorSerializer(ModelSerializer):
     full_name = SerializerMethodField()
-    email = EmailField(source="user.email")
+    email = EmailField(source="user.email", read_only=True)
     created_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     updated_at = DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 

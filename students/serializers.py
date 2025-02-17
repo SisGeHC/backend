@@ -26,10 +26,16 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ["id", "full_name", "email", "course", "course_name"]
+        fields = ["id", "full_name", "course_name", "email", "user", "course", "complementary_hours", "created_at", "updated_at"]
 
     def get_full_name(self, obj):
-        return obj.full_name
+        if isinstance(obj, Student): 
+            return f"{obj.user.first_name} {obj.user.last_name}"
+        elif isinstance(obj, User):  
+            return f"{obj.first_name} {obj.last_name}"
+        return "Nome Desconhecido"
+
+
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", None)  

@@ -10,6 +10,6 @@ from .views import (
 urlpatterns = [
     path("create", ProfessorCreateView.as_view(), name="professor-create"),
     path("list", ProfessorListView.as_view(), name="professor-list"),
-    path("update", ProfessorUpdateView.as_view(), name="professor-update"),
+    path("<int:pk>/update/", ProfessorUpdateView.as_view(), name="professor-update"),
     path("<int:pk>/", ProfessorDetailView.as_view(), name="professor-detail"),
 ]

@@ -35,3 +35,4 @@ class CoordinatorUpdateView(UpdateAPIView):
     queryset = Coordinator.objects.all()
     serializer_class = CoordinatorSerializer
     http_method_names = ["patch"]
+    lookup_field = "pk"

@@ -69,3 +69,8 @@ class EventSerializer(ModelSerializer):
             return CoordinatorSerializer(coordinator).data
 
         return obj.creator.id
+
+class EventEnrollmentSerializer(EventSerializer):
+
+    class Meta(EventSerializer.Meta):
+        fields = EventSerializer.Meta.fields

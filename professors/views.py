@@ -34,3 +34,4 @@ class ProfessorUpdateView(UpdateAPIView):
     queryset = Professor.objects.all()
     serializer_class = ProfessorSerializer
     http_method_names = ["patch"]
+    lookup_field = "pk"
