@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from enrollments.models import Enrollment
 from professors.models import Professor
+from students.services import send_student_email
 
 from .models import Date, Event
 from .serializers import (
@@ -18,6 +19,8 @@ from .serializers import (
 
 
 class EventUpdateView(APIView):
+    serializer_class = CreateEventSerializer
+
     def patch(self, request, id, *args, **kwargs):
         try:
             event = Event.objects.get(id=id)
@@ -29,6 +32,25 @@ class EventUpdateView(APIView):
         serializer = EventSerializer(event, data=request.data, partial=True)
         if serializer.is_valid():
             updated_event = serializer.save()
+
+            enrollments = Enrollment.objects.filter(event=event)
+
+            for enrollment in enrollments:
+                send_student_email(
+                    self,
+                    student=enrollment.student,
+                    subject=f"Notificação do Evento: {event.title}",
+                    template_name="event_updated_email.html",
+                    context={
+                        "student_name": enrollment.student.user.get_full_name(),
+                        "event_title": event.title,
+                        "event_date": event.dates.first().day.strftime("%d/%m/%Y"),
+                        "event_time": event.dates.first().start_time.strftime("%H:%M"),
+                        "event_location": event.location,
+                        "message": "Cheque o site para maiores informações",
+                    },
+                )
+
             return Response(
                 EventSerializer(updated_event).data, status=status.HTTP_200_OK
             )

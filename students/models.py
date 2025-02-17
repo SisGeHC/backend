@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import (
     CASCADE,
     DateTimeField,
@@ -23,7 +24,23 @@ class Student(Model):
     def full_name(self):
         return f"{self.user.first_name} {self.user.last_name}"
 
+    def email_student(
+        self,
+        subject,
+        message,
+        html_message,
+        from_email=None,
+        **kwargs,
+    ):
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=from_email,
+            html_message=html_message,
+            recipient_list=[self.user.email],
+            **kwargs,
+        )
 
-def __str__(self):
+    def __str__(self):
 
-    return f"{self.user.first_name} {self.user.last_name}"
+        return f"{self.user.first_name} {self.user.last_name}"
