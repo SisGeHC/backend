@@ -111,7 +111,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         )
 
         response = HttpResponse(buffer.getvalue(), content_type="image/png")
-        response["Content-Disposition"] = f"attachment; filename=qr_{enrollment.id}.png"
+        response["Content-Disposition"] = f"inline; filename=qr_{enrollment.id}.png"
         return response
 
     @transaction.atomic
