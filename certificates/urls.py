@@ -16,11 +16,11 @@ urlpatterns = [
         CertificateCreateView.as_view(),
         name="certificate-create",
     ),
-    path(
-        "<int:pk>/preview/",
-        CertificatePreviewView.as_view(),
-        name="certificate-preview",
+    path('<pk>/preview/',
+          CertificatePreviewView.as_view(), 
+          name='certificate-preview'
     ),
+
     path(
         "<int:pk>/update/", CertificateUpdateView.as_view(), name="certificate-update"
     ),

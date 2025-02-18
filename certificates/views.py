@@ -1,5 +1,5 @@
 import mimetypes
-
+from django.conf import settings
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
@@ -14,6 +14,18 @@ from students.models import Student
 from .models import Certificate
 from .serializers import CertificateSerializer
 
+
+class CertificatePreviewView(APIView):
+    def get(self, request, id):
+        certificate = get_object_or_404(Certificate, id=id)
+
+        if not certificate.file:
+            return Response({"error": "Certificado não encontrado."}, status=404)
+
+        file_url = f"{settings.MEDIA_URL}{certificate.file}"
+        full_url = request.build_absolute_uri(file_url)  # URL completa para o frontend
+
+        return Response({"file_url": full_url}, status=200)
 
 class CertificateListView(ListAPIView):
 
@@ -89,19 +101,6 @@ class CertificateCreateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CertificatePreviewView(APIView):
-
-    def get(self, request, pk, *args, **kwargs):
-        certificate = get_object_or_404(Certificate, pk=pk)
-        file = open(certificate.file.path, "rb")
-
-        content_type, _ = mimetypes.guess_type(certificate.file.name)
-        response = FileResponse(file, content_type=content_type)
-
-        response["Content-Disposition"] = f'inline; filename="{certificate.file.name}"'
-        return response
 
 
 class CertificateUpdateView(APIView):
