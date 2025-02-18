@@ -1,6 +1,7 @@
 from io import BytesIO
 
 import qrcode
+import requests
 from django.core.files import File
 from django.db import transaction
 from django.http import HttpResponse
@@ -94,6 +95,14 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         event.slots -= 1
         event.save()
 
+        url = "https://api.imgbb.com/1/upload"
+        params = {"key": "95d39d279af969953fb408be8d0ea421"}
+        files = {"image": buffer.getvalue()}
+
+        response = requests.post(url, params=params, files=files)
+        if response.status_code == 200:
+            image_url = response.json()["data"]["url"]
+
         send_student_email(
             self,
             student=student,
@@ -106,7 +115,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
                 "event_time": event.dates.first().start_time.strftime("%H:%M"),
                 "event_location": event.location,
                 "event_category": event.category,
-                "qr_code_url": request.build_absolute_uri(enrollment.qr_code.url),
+                "qr_code_url": image_url,
             },
         )
 
