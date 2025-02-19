@@ -55,9 +55,7 @@ class EventSerializer(ModelSerializer):
             "category",
             "dates",
             "creator",
-            "slots", 
-            'start_time', 
-            'end_time'
+            "slots",
         ]
 
     def get_creator(self, obj):

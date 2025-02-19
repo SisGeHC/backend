@@ -140,7 +140,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             "event_time": event.dates.first().start_time.strftime("%H:%M"),
             "event_location": event.location,
             "event_category": event.category,
-            "qr_code_url": qr_code_url,  # Usando a URL gerada do QR Code
+            "qr_code_url": qr_code_url,  
         }
 
         html_message = render_to_string("emails/email_confirmation.html", context)
@@ -160,7 +160,6 @@ class AttendanceValidationView(APIView):
             return Response({"error": "ID da matrícula não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Aqui a matrícula é localizada usando o enrollment_id
             enrollment = Enrollment.objects.get(id=enrollment_id)
             
             if enrollment.attended:
@@ -174,12 +173,6 @@ class AttendanceValidationView(APIView):
                 )
 
             enrollment.attended = True
-            event_hours = enrollment.event_hours  
-
-            student = enrollment.student
-            student.complementary_hours += event_hours  
-            student.save()
-
             enrollment.save()
 
             return Response(
