@@ -5,7 +5,7 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     TimeField,
 )
-
+from datetime import timedelta
 from coordinators.models import Coordinator
 from coordinators.serializers import CoordinatorSerializer, SerializerMethodField
 from professors.models import Professor
@@ -55,7 +55,9 @@ class EventSerializer(ModelSerializer):
             "category",
             "dates",
             "creator",
-            "slots",
+            "slots", 
+            'start_time', 
+            'end_time'
         ]
 
     def get_creator(self, obj):
@@ -69,6 +71,7 @@ class EventSerializer(ModelSerializer):
             return CoordinatorSerializer(coordinator).data
 
         return obj.creator.id
+    
 
 class EventEnrollmentSerializer(EventSerializer):
 

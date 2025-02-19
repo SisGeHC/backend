@@ -13,7 +13,7 @@ router.register(r"", EnrollmentViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     path(
-        "validate-attendance/",
+        "validate-attendance/<int:enrollment_id>/",
         AttendanceValidationView.as_view(),
         name="validate-attendance",
     ),

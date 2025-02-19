@@ -95,7 +95,9 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates'),  
+            os.path.join(BASE_DIR, 'sistema_horas_complementares', 'enrollments', 'templates'),
+            ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -165,16 +167,6 @@ import os
 STATIC_URL = "static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = "587"
-EMAIL_HOST_USER = "wecemailtest@gmail.com"
-EMAIL_HOST_PASSWORD = "rawr sfne fxqy awwh"
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = "wecemailtest@gmail.com"
-
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

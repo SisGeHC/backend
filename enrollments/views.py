@@ -5,6 +5,10 @@ import requests
 from django.core.files import File
 from django.db import transaction
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -30,13 +34,12 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return CreateEnrollmentSerializer
         return EnrollmentSerializer
-
+    
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         user_id = request.user.id
         try:
             student = Student.objects.get(user_id=user_id)
-            student_id = student.id
         except Student.DoesNotExist:
             return Response(
                 {"error": "Estudante não encontrado."},
@@ -53,7 +56,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if Enrollment.objects.filter(student_id=student_id, event_id=event_id).exists():
+        if Enrollment.objects.filter(student_id=student.id, event_id=event_id).exists():
             return Response(
                 {"error": "Você já está inscrito neste evento!"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -65,14 +68,8 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data = request.data.copy()
-        data["student"] = request.user.id
-
         enrollment_data = {"student": student.id, "event": event_id}
-
         serializer = self.get_serializer(data=enrollment_data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.is_valid(raise_exception=True)
         enrollment = serializer.save()
 
@@ -107,7 +104,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             self,
             student=student,
             subject="Confirmação de Inscrição no Evento",
-            template_name="email_confirmation.html",
+            template_name="emails/email_confirmation.html",
             context={
                 "student_name": student.user.get_full_name(),
                 "event_title": event.title,
@@ -122,10 +119,9 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         response = HttpResponse(buffer.getvalue(), content_type="image/png")
         response["Content-Disposition"] = f"inline; filename=qr_{enrollment.id}.png"
         return response
-
+    
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
-
         enrollment = self.get_object()
         event = enrollment.event
 
@@ -135,41 +131,79 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         enrollment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def send_enrollment_email(self, student, event, qr_code_url):
+        subject = "Confirmação de Inscrição no Evento"
+        context = {
+            "student_name": student.user.get_full_name(),
+            "event_title": event.title,
+            "event_date": event.dates.first().day.strftime("%d/%m/%Y"),
+            "event_time": event.dates.first().start_time.strftime("%H:%M"),
+            "event_location": event.location,
+            "event_category": event.category,
+            "qr_code_url": qr_code_url,  # Usando a URL gerada do QR Code
+        }
+
+        html_message = render_to_string("emails/email_confirmation.html", context)
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [student.user.email],
+            html_message=html_message,
+        )
 
 class AttendanceValidationView(APIView):
+    def get(self, request, enrollment_id, *args, **kwargs):  
+        if not enrollment_id:
+            return Response({"error": "ID da matrícula não fornecido."}, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        request={
-            "application/json": {
-                "type": "object",
-                "properties": {
-                    "enrollment_id": {
-                        "type": "integer",
-                        "description": "ID da inscrição",
-                    },
-                },
-                "required": ["enrollment_id"],
-            }
-        },
-        responses={
-            200: EnrollmentSerializer,
-            404: EnrollmentSerializer,
-        },
-    )
-    def post(self, request, *args, **kwargs):
-        enrollment_id = request.data.get("enrollment_id")
         try:
+            # Aqui a matrícula é localizada usando o enrollment_id
             enrollment = Enrollment.objects.get(id=enrollment_id)
+            
+            if enrollment.attended:
+                return Response(
+                    {
+                        "status": "already_confirmed",
+                        "message": "Presença já confirmada!",
+                        "attended": True,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
             enrollment.attended = True
+            event_hours = enrollment.event_hours  
+
+            student = enrollment.student
+            student.complementary_hours += event_hours  
+            student.save()
+
             enrollment.save()
+
             return Response(
-                {"message": "Presença validada com sucesso."}, status=status.HTTP_200_OK
+                {
+                    "status": "success",
+                    "message": "Presença confirmada com sucesso!",
+                    "attended": True,
+                    "student": enrollment.student.user.get_full_name(),
+                    "event": enrollment.event.title,
+                    "date": enrollment.event.dates.first().day.strftime("%d/%m/%Y"),
+                    "location": enrollment.event.location,
+                },
+                status=status.HTTP_200_OK,
             )
+
         except Enrollment.DoesNotExist:
             return Response(
-                {"error": "Inscrição não encontrada."}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Inscrição não encontrada."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
+
+
+            
 
 class SendEventNotificationView(APIView):
     serializer_class = EmailSerializer
@@ -203,7 +237,7 @@ class SendEventNotificationView(APIView):
                 self,
                 student=enrollment.student,
                 subject=f"Notificação do Evento: {event.title}",
-                template_name="event_notification_email.html",
+                template_name="emails/event_notification_email.html",
                 context={
                     "student_name": enrollment.student.user.get_full_name(),
                     "event_title": event.title,
