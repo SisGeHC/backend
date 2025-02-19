@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evento Atualizado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header img {
+            max-width: 150px;
+        }
+
+        .content {
+            padding: 20px 0;
+        }
+
+        .content h1 {
+            font-size: 24px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        .content p {
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .event-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .event-info h2 {
+            font-size: 20px;
+            color: #333333;
+            margin-bottom: 10px;
+        }
+
+        .event-info p {
+            font-size: 14px;
+            color: #555555;
+            margin: 5px 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #999999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://www.uece.br/wp-content/uploads/2019/09/uece-logocompleta.png" alt="Logo da Instituição" />
+        </div>
+        <div class="content">
+            <h1>Evento Atualizado</h1>
+            <p>Olá, {{ student_name }}!</p>
+            <p>O professor responsável pelo evento <strong>{{ event_title }}</strong> fez uma atualização. {{ message }}
+            </p>
+
+
+            <div class="event-info">
+                <h2>Informações Atualizadas do Evento</h2>
+                <p><strong>Nome do Evento:</strong> {{ event_title }}</p>
+                <p><strong>Data:</strong> {{ event_date }}</p>
+                <p><strong>Horário:</strong> {{ event_time }}</p>
+                <p><strong>Local:</strong> {{ event_location }}</p>
+                <p><strong>Categoria:</strong> {{ event_category }}</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Se você tiver alguma dúvida, entre em contato conosco:</p>
+            <p><a href="mailto:suporte@uece.com.br">suporte@uece.com.br</a> | (85) 9999-9999</p>
+            <p>© 2025 Instituição de Ensino. Todos os direitos reservados.</p>
+        </div>
+    </div>
+</body>
+
+</html>

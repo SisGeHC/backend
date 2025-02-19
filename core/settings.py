@@ -85,7 +85,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", 
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -178,5 +178,14 @@ DEFAULT_FROM_EMAIL = "wecemailtest@gmail.com"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = "587"
+EMAIL_HOST_USER = "wecemailtest@gmail.com"
+EMAIL_HOST_PASSWORD = "rawr sfne fxqy awwh"
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = "wecemailtest@gmail.com"
+
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
