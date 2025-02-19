@@ -1,6 +1,5 @@
-from django.conf import settings
 from django.db.models import CASCADE, BooleanField, ForeignKey, ImageField, Model
-
+from django.db import models
 from events.models import Event
 
 
@@ -17,3 +16,4 @@ class Enrollment(Model):
 
     def __str__(self):
         return f"{self.student.user.username} - {self.event.title}"
+

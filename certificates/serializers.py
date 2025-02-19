@@ -31,7 +31,6 @@ class CertificateSerializer(ModelSerializer):
         ]
 
     def validate_file(self, value):
-        """Valida o tipo de arquivo."""
         allowed_extensions = [".png", ".jpeg"]
         ext = os.path.splitext(value.name)[1]  # Pega a extensão do arquivo
         if ext.lower() not in allowed_extensions:
